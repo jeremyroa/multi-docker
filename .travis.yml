@@ -1,0 +1,33 @@
+language: generic 
+services:
+  - docker
+
+before_install:
+  - docker build -t jeremyroa/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true jeremyroa/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t jeremyroa/multi-client ./client
+  - docker build -t jeremyroa/multi-server ./server
+  - docker build -t jeremyroa/multi-worker ./worker
+  - docker build -t jeremyroa/multi-nginx ./nginx
+  #Log in to the DOCKER CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push jeremyroa/multi-client
+  - docker push jeremyroa/multi-server
+  - docker push jeremyroa/multi-worker
+  - docker push jeremyroa/multi-nginx
+# deploy:
+#   edge: true
+#   provider: elasticbeanstalk
+#   region: "us-east-2"
+#   app: "learn-docker-react"
+#   env: "LearnDockerReact-env"
+#   bucket_name: "elasticbeanstalk-us-east-2-522311202216"
+#   bucket_path: "learn-docker-react"
+#   on:
+#     branch: master
+#   access_key_id: $AWS_ACCESS_KEY
+#   secret_access_key: $AWS_SECRET_KEY
